@@ -40,20 +40,5 @@ class RecordsActivity : AppCompatActivity() {
             swpRecords.isRefreshing = false
             recordsAdapter.submitList(it)
         })
-
-        recRecords.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy > 0) {
-                    if(!recyclerView.canScrollVertically(RecyclerView.FOCUS_DOWN)){
-                        viewModel.loadRecords()
-                    }
-                }
-            }
-        })
-
-        swpRecords.setOnRefreshListener {
-            viewModel.refresh()
-        }
     }
 }

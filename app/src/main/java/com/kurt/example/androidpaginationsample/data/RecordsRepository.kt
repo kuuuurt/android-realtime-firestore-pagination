@@ -1,9 +1,10 @@
 package com.kurt.example.androidpaginationsample.data
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.kurt.example.androidpaginationsample.data.models.RealtimeRecord
 import com.kurt.example.androidpaginationsample.data.models.Record
+import io.reactivex.Observable
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 /**
@@ -12,53 +13,58 @@ import javax.inject.Inject
  * @author Kurt Renzo Acosta
  * @since 06/14/2019
  */
+
 class RecordsRepository @Inject constructor() {
     val db = FirebaseFirestore.getInstance()
 
-    val first = db.collection("records")
-        .orderBy("name")
-        .limit(25)
+    suspend fun getRecords(
+        pageSize: Int,
+        loadBefore: String? = null,
+        loadAfter: String? = null
+    ): List<RealtimeRecord> {
+        var query = db.collection("records").orderBy("name").limit(pageSize.toLong())
 
-    var next: Query? = null
+        loadBefore?.let {
+            val item = db.collection("records").document(it)
+                .get()
+                .await()
 
-    fun getRecords(onSuccess: (List<Record>) -> Unit) {
-        val nextQuery = next
-        if (nextQuery != null) {
-            nextQuery.get()
-                .addOnSuccessListener { recordSnapshots ->
-                    val lastVisible = recordSnapshots.documents[recordSnapshots.size() - 1]
+            query = query.endBefore(item)
+        }
 
-                    next = db.collection("records")
-                        .orderBy("name")
-                        .startAfter(lastVisible)
-                        .limit(25)
+        loadAfter?.let {
+            val item = db.collection("records").document(it)
+                .get()
+                .await()
 
-                    onSuccess(recordSnapshots.map {
-                        val record = it.toObject(Record::class.java)
-                        record.id = it.id
-                        record
-                    })
-                }
-        } else {
-            first.get()
-                .addOnSuccessListener { recordSnapshots ->
-                    val lastVisible = recordSnapshots.documents[recordSnapshots.size() - 1]
+            query = query.startAfter(item)
+        }
 
-                    next = db.collection("records")
-                        .orderBy("name")
-                        .startAfter(lastVisible)
-                        .limit(25)
+        return query.get()
+            .await()
+            .map {
+                RealtimeRecord(
+                    it.id,
+                    getRecord(it.id)
+                )
+            }
+    }
 
-                    onSuccess(recordSnapshots.map {
-                        val record = it.toObject(Record::class.java)
-                        record.id = it.id
-                        record
-                    })
+    private fun getRecord(itemId: String): Observable<Record> =
+        Observable.create<Record> { emitter ->
+            db.collection("records")
+                .document(itemId)
+                .addSnapshotListener { snapshot, exception ->
+                    if (exception != null) {
+                        emitter.onError(exception)
+                    } else if (snapshot != null && snapshot.exists()) {
+                        emitter.onNext(
+                            snapshot.toObject(Record::class.java)
+                                ?: throw IllegalArgumentException()
+                        )
+                    } else {
+                        emitter.onError(Throwable("Record does not exist"))
+                    }
                 }
         }
-    }
-
-    fun refresh() {
-        next = null
-    }
 }
