@@ -42,6 +42,9 @@ dependencies {
     implementation "com.google.firebase:firebase-core:16.0.9"
     implementation "com.google.firebase:firebase-firestore:19.0.2"
 
+    // Firebase UI
+    implementation 'com.firebaseui:firebase-ui-firestore:5.0.0'
+
     // Paging
     implementation "androidx.paging:paging-runtime-ktx:2.1.0"
 
