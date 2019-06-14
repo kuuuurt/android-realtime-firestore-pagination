@@ -5,19 +5,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.paging.PagedList
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.kurt.example.androidpaginationsample.R
 import com.kurt.example.androidpaginationsample.data.models.RealtimeRecord
-import com.kurt.example.androidpaginationsample.data.models.Record
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
-import java.util.ArrayList
 
 /**
  * Copyright 2019, Kurt Renzo Acosta, All rights reserved.
@@ -27,8 +23,11 @@ import java.util.ArrayList
  */
 class RecordsAdapter : PagedListAdapter<RealtimeRecord, RecordsAdapter.RecordViewHolder>(
     object : DiffUtil.ItemCallback<RealtimeRecord>() {
-        override fun areItemsTheSame(old: RealtimeRecord, new: RealtimeRecord): Boolean = old.id == new.id
-        override fun areContentsTheSame(old: RealtimeRecord, new: RealtimeRecord): Boolean = old == new
+        override fun areItemsTheSame(old: RealtimeRecord, new: RealtimeRecord): Boolean =
+            old.id == new.id
+
+        override fun areContentsTheSame(old: RealtimeRecord, new: RealtimeRecord): Boolean =
+            old == new
     }
 ) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordViewHolder {
@@ -47,10 +46,20 @@ class RecordsAdapter : PagedListAdapter<RealtimeRecord, RecordsAdapter.RecordVie
 
     override fun onViewRecycled(holder: RecordViewHolder) {
         super.onViewRecycled(holder)
-        holder.viewHolderDisposables.clear()
+        holder.apply {
+            txtRecordName.text = ""
+            crdRecord.isEnabled = true
+            crdRecord.setCardBackgroundColor(
+                ContextCompat.getColor(
+                    view.context,
+                    android.R.color.white
+                )
+            )
+            viewHolderDisposables.clear()
+        }
     }
 
-    inner class RecordViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
+    inner class RecordViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val viewHolderDisposables = CompositeDisposable()
 
         val crdRecord by lazy { view.findViewById<MaterialCardView>(R.id.crd_record) }
@@ -63,8 +72,20 @@ class RecordsAdapter : PagedListAdapter<RealtimeRecord, RecordsAdapter.RecordVie
                         onNext = {
                             txtRecordName.text = it.name
                             crdRecord.isEnabled = it.isActive
-                            if(!it.isActive) {
-                                crdRecord.setCardBackgroundColor(ContextCompat.getColor(view.context, android.R.color.darker_gray))
+                            if (!it.isActive) {
+                                crdRecord.setCardBackgroundColor(
+                                    ContextCompat.getColor(
+                                        view.context,
+                                        android.R.color.darker_gray
+                                    )
+                                )
+                            } else {
+                                crdRecord.setCardBackgroundColor(
+                                    ContextCompat.getColor(
+                                        view.context,
+                                        android.R.color.white
+                                    )
+                                )
                             }
                         },
                         onError = {
