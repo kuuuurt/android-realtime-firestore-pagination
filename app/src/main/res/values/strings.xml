@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Android Pagination Sample</string>
+    <string name="toolbar_records_title">Records</string>
+</resources>
